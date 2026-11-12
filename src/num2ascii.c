@@ -83,6 +83,38 @@ int i2bin(int num, char* str) {
     return i2;
 }
 
+int f2ascii(float num, char* str, int prec) {
+    int i = 0;
+    
+    float rnd = 0.5;
+    for (int d = 0; d < prec; d++) {
+        rnd /= 10.0;
+    }
+    num += rnd;
+
+    int ipart = (int)num;
+    float fpart = num - (float)ipart;
+
+    if (ipart == 0) {
+        str[i++] = '0';
+    }
+    else {
+        i += i2ascii(ipart, str);
+    }
+
+    if (prec > 0) {
+        str[i++] = '.';
+        for (int j = 0; j < prec; j++) {
+            fpart *= 10.0f;
+            int digit = (int)fpart;
+            str[i++] = digit + '0';
+            fpart -= digit;
+        }
+    }
+    
+    return i;
+}
+
 // void print_int(char *fmt, int num) {
     // char out[128];
     
@@ -119,9 +151,10 @@ int i2bin(int num, char* str) {
 
 // EXAMPLE
 // int offset = 0;
-// char str[128];
-// offset += s2ascii("bin: 0b", (str + offset));
-// offset += i2bin(0x00000001, (str + offset));
-// offset += s2ascii(" hex: 0x", (str + offset));
+// char str[64];
+// offset += s2ascii("lol ", (str + offset));
+// offset += f2ascii(13.3777, (str + offset), 2);
+// offset += s2ascii(" kek 0x", (str + offset));
 // offset += i2hex(0xDEADBEEF, (str + offset));
+// offset += s2ascii("\n", (str + offset));
 // str[offset] = '\0';
