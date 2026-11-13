@@ -17,6 +17,75 @@ void idle_task(void) {
     }
 }
 
+// MUTEX
+
+void mutex_push(mutex_t *mutex, task_ctx_t *task) {
+	task->next = NULL;
+	if (mutex->waiters_tail) {
+		mutex->waiters_tail->next = task;
+	} else {
+		mutex->waiters_head = task;
+	}
+	mutex->waiters_tail = task;
+}
+
+task_ctx_t *mutex_pop(mutex_t *mutex) {
+	task_ctx_t *task = mutex->waiters_head;
+	if (!task) return NULL;
+
+	mutex->waiters_head = task->next;
+	if (!mutex->waiters_head) {
+		mutex->waiters_tail = NULL;
+	}
+	task->next = NULL;
+	return task;
+}
+
+void mutex_lock(mutex_t *mutex) {
+	for (;;) {
+		uint32_t irq_mask = irq_save();
+		
+		if (mutex->owner == g_current_task) {
+			// double lock, panic
+			__asm volatile("bkpt 0");
+			return;
+		}
+		
+		if (!mutex->owner) {
+			mutex->owner = g_current_task;
+			irq_restore(irq_mask);
+			return;
+		}
+		
+		g_current_task->state = TASK_BLOCKED;
+		mutex_push(mutex, g_current_task);
+		irq_restore(irq_mask);
+		task_yield();
+	}
+}
+
+void mutex_unlock(mutex_t *mutex) {
+	uint32_t irq_mask = irq_save();
+
+	if (mutex->owner != g_current_task) {
+		irq_restore(irq_mask);
+		// mutex unlock by the wrong task, panic
+		__asm volatile("bkpt 0");
+		return;
+	}
+
+	task_ctx_t *next = mutex_pop(mutex);
+	if (next) {
+		mutex->owner = next;
+		next->state = TASK_READY;
+		ready_push(next);
+	} else {
+		mutex->owner = NULL;
+	}
+
+	irq_restore(irq_mask);
+}
+
 // TASK POOL
 static task_ctx_t *task_alloc(void)
 {

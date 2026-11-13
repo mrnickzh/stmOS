@@ -1,6 +1,8 @@
 #ifndef SCHEDULER_H
 #define SCHEDULER_H
 
+
+#define NULL (void*)(0)
 #include <stdint.h>
 
 #define TASK_FREE    0
@@ -46,5 +48,21 @@ void ready_remove(task_ctx_t *task);
 // BLOCKED LIST
 void blocked_push(task_ctx_t *task);
 void blocked_remove(task_ctx_t *task);
+
+
+// MUTEX
+
+typedef struct {
+    task_ctx_t *owner;
+    task_ctx_t *waiters_head;
+    task_ctx_t *waiters_tail;
+} mutex_t;
+
+void mutex_lock(mutex_t *mutex);
+void mutex_unlock(mutex_t *mutex);
+
+// MUTEX QUEUE
+void mutex_push(mutex_t *mutex, task_ctx_t *task);
+task_ctx_t* mutex_pop(mutex_t *mutex);
 
 #endif // SCHEDULER_H

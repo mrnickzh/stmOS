@@ -17,62 +17,62 @@ void delay_milliseconds(uint32_t t)
     }
 }
 
-volatile uint32_t counter_a = 0;
-volatile uint32_t counter_b = 0;
-volatile uint32_t counter_c = 0;
+mutex_t print_lock;
 
-void taska(void)
-{
-    while (1) {
-        counter_a++;
+void taska(void) {
+    for(;;) {
+        mutex_lock(&print_lock);
+		
+        int offset = 0;
+		char str[64];
+		offset += s2ascii("[Task A] systick: ", (str + offset));
+		offset += ui2ascii(systick_counter, (str + offset));
+		offset += s2ascii("\n", (str + offset));
+		str[offset] = '\0';
+		semihost_write(str, offset);
+		
+        mutex_unlock(&print_lock);
+		
         task_sleep(100);
-        // task_yield();
     }
 }
 
-void taskc(void)
-{
-    while (1) {
-        counter_c++;
+void taskb(void) {
+    for(;;) {
+        mutex_lock(&print_lock);
+		
+        int offset = 0;
+		char str[64];
+		offset += s2ascii("[Task B] systick: ", (str + offset));
+		offset += ui2ascii(systick_counter, (str + offset));
+		offset += s2ascii("\n", (str + offset));
+		str[offset] = '\0';
+		semihost_write(str, offset);
+		
+        mutex_unlock(&print_lock);
+		
         task_sleep(100);
-        // task_yield();
-		if (counter_c > 100) {
-			counter_c = 0;
-			
-			int offset = 0;
-			char str[64];
-			offset += s2ascii("taskC killed at ", (str + offset));
-			offset += ui2ascii(systick_counter, (str + offset));
-			offset += s2ascii("\n", (str + offset));
-			str[offset] = '\0';
-			semihost_write(str, offset);
-			
-			task_exit();
-		}
     }
 }
 
-void taskb(void)
-{
-    while (1) {
-        counter_b++;
-        task_sleep(20);
-        // task_yield();
-		if (counter_b % 10 == 0) {
-			if (counter_b >= 100) { task_exit(); }
-			
-			int offset = 0;
-			char str[64];
-			offset += s2ascii("taskC spawned at ", (str + offset));
-			offset += ui2ascii(systick_counter, (str + offset));
-			offset += s2ascii("\n", (str + offset));
-			str[offset] = '\0';
-			semihost_write(str, offset);
-			
-			task_create("C", taskc, 128);
-		}
+void taskc(void) {
+    for(;;) {
+        mutex_lock(&print_lock);
+		
+        int offset = 0;
+		char str[64];
+		offset += s2ascii("[Task C] systick: ", (str + offset));
+		offset += ui2ascii(systick_counter, (str + offset));
+		offset += s2ascii("\n", (str + offset));
+		str[offset] = '\0';
+		semihost_write(str, offset);
+		
+        mutex_unlock(&print_lock);
+		
+        task_sleep(100);
     }
 }
+
 int main()
 {
     HSE_Init();
@@ -97,8 +97,9 @@ int main()
 	
 	task_create("IDLE", idle_task, 128);
 	
-	task_create("A", taska, 128);
-    task_create("B", taskb, 128);
+	task_create("A", taska, 256);
+    task_create("B", taskb, 256);
+	task_create("C", taskc, 256);
 
     scheduler_start();
 
