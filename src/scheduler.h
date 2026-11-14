@@ -1,8 +1,6 @@
 #ifndef SCHEDULER_H
 #define SCHEDULER_H
 
-
-#define NULL (void*)(0)
 #include <stdint.h>
 
 #define TASK_FREE    0

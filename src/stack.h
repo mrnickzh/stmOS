@@ -11,15 +11,15 @@
 // head of a free list = NULL
 // not head of a free list = next free block
 
-#define STACK_NUM_CLASSES   5
-#define STACK_POOL_WORDS    8192     // 32kb
+#define STACK_NUM_CLASSES   4
+#define STACK_POOL_WORDS    4096     // 16kb
 
 #define STACK_PAINT 0xA5A5A5A5
 #define STACK_GUARD 0xDEADBEEF // stack canary
 
 extern uint32_t g_stack_pool[STACK_POOL_WORDS];
 extern uint32_t *g_stack_brk;
-extern uint32_t *g_free[STACK_NUM_CLASSES];
+extern uint32_t *g_stack_free[STACK_NUM_CLASSES];
 
 extern const uint32_t g_class_words[STACK_NUM_CLASSES];
 

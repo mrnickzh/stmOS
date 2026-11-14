@@ -1,6 +1,8 @@
 #ifndef CORTEX_M4_H
 #define CORTEX_M4_H
 
+#define NULL (void*)(0)
+
 #include <stdint.h>
 
 // NVIC peripheral registers structure
