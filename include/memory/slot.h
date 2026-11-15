@@ -1,7 +1,7 @@
 #ifndef SLOT_H
 #define SLOT_H
 
-#include "Cortex-M4.h"
+#include "platform/Cortex-M4.h"
 
 // so, this is a buddy heap allocator
 // the concept works as following:

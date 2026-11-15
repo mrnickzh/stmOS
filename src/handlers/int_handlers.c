@@ -1,8 +1,8 @@
-#include "int_handlers.h"
+#include "handlers/int_handlers.h"
 
-#include "scheduler.h"
-#include "Cortex-M4.h"
-#include "STM32F411xE.h"
+#include "scheduler/scheduler.h"
+#include "platform/Cortex-M4.h"
+#include "platform/STM32F411xE.h"
 
 volatile uint32_t systick_counter = 0;
 

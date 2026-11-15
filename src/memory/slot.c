@@ -1,4 +1,4 @@
-#include "slot.h"
+#include "memory/slot.h"
 
 // const log2
 #define SLOT_ARENA_LOG2   16    // log2(64kb)

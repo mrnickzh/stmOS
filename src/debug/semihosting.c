@@ -1,4 +1,4 @@
-#include "semihosting.h"
+#include "debug/semihosting.h"
 
 static int semihost_call(int reason, void *arg) {
     register int   r0 __asm__("r0") = reason;

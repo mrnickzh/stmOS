@@ -1,9 +1,9 @@
-#include "STM32F411xE.h"
-#include "int_handlers.h"
-#include "scheduler.h"
-#include "num2ascii.h"
-#include "semihosting.h"
-#include "slot.h"
+#include "platform/STM32F411xE.h"
+#include "handlers/int_handlers.h"
+#include "scheduler/scheduler.h"
+#include "utils/num2ascii.h"
+#include "debug/semihosting.h"
+#include "memory/slot.h"
 
 mutex_t print_lock;
 

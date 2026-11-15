@@ -1,8 +1,8 @@
-#include "scheduler.h"
+#include "scheduler/scheduler.h"
 
-#include "int_handlers.h"
-#include "stack.h"
-#include "Cortex-M4.h"
+#include "handlers/int_handlers.h"
+#include "memory/stack.h"
+#include "platform/Cortex-M4.h"
 
 task_ctx_t g_tasks_pool[MAX_TASKS] __attribute__((aligned(8)));
 uint32_t g_tasks_bitmap = 0;

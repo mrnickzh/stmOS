@@ -1,6 +1,6 @@
-#include "stack.h"
+#include "memory/stack.h"
 
-#include "Cortex-M4.h"
+#include "platform/Cortex-M4.h"
 
 const uint32_t g_class_words[STACK_NUM_CLASSES] = {
     128,    // 512b
