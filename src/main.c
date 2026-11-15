@@ -5,19 +5,6 @@
 #include "semihosting.h"
 #include "slot.h"
 
-volatile uint32_t svc_call_count = 0;
-
-// Delay for `t` milliseconds.
-void delay_milliseconds(uint32_t t)
-{
-    const uint32_t start = systick_counter;
-
-    while (systick_counter - start < t)
-    {
-        // Do nothing
-    }
-}
-
 mutex_t print_lock;
 
 void taska(void) {
@@ -50,9 +37,8 @@ void taskb(void) {
 		str[offset] = '\0';
 		semihost_write(str, offset);
 		
+		task_sleep(100);
         mutex_unlock(&print_lock);
-		
-        task_sleep(100);
     }
 }
 
@@ -68,29 +54,22 @@ void taskc(void) {
 		str[offset] = '\0';
 		semihost_write(str, offset);
 		
+		task_sleep(10);
         mutex_unlock(&print_lock);
-		
-        task_sleep(100);
     }
 }
 
 void memtest(void) {
-	{
-		int offset = 0;
-		char str[128];
-		offset += s2ascii("KERNEL LIVE!\n", (str + offset));
-		str[offset] = '\0';
-		semihost_write(str, offset);
-	}
+	mutex_lock(&print_lock);
 	
 	void *ptrs[32] = {0};
 	for (int round = 0; round < 200; round++) {
-		// alloc random 2-8 KB
+		// alloc
 		for (int i = 0; i < 8; i++) {
-			uint32_t sz = 2048 << (round & 3);   // 2,4,8,16 KB
+			uint32_t sz = 2048 << (round & 3);
 			ptrs[i] = slot_alloc(sz);
 		}
-		// free в случайном порядке (или обратном)
+		// free
 		for (int i = 7; i >= 0; i--) {
 			if (ptrs[i]) { slot_free(ptrs[i], 2048 << (round & 3)); ptrs[i] = 0; }
 		}
@@ -143,6 +122,8 @@ void memtest(void) {
 		semihost_write(str, offset);
 	}
 	
+	mutex_unlock(&print_lock);
+	
 	task_exit();
 }
 
@@ -162,15 +143,23 @@ int main()
     // BIT_CLEAR(GPIOC->MODER, GPIO_MODER_MODER13_MASK);
     // BIT_SET(GPIOC->MODER, GPIO_MODER_MODER13_OUTPUT);
 	
+	{
+		int offset = 0;
+		char str[128];
+		offset += s2ascii("KERNEL LIVE!\n", (str + offset));
+		str[offset] = '\0';
+		semihost_write(str, offset);
+	}
+	
 	slot_init();
 	
 	task_create("IDLE", idle_task, 128);
 	
-	task_create("MEMT", memtest, 2048);
+	// task_create("MEMT", memtest, 2048);
 	
 	// task_create("A", taska, 256);
-    // task_create("B", taskb, 256);
-	// task_create("C", taskc, 256);
+    task_create("B", taskb, 256);
+	task_create("C", taskc, 256);
 
     scheduler_start();
 

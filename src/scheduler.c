@@ -42,14 +42,19 @@ task_ctx_t *mutex_pop(mutex_t *mutex) {
 }
 
 void mutex_lock(mutex_t *mutex) {
+	if (mutex->owner == g_current_task) {
+		// double lock, panic
+		__asm volatile("bkpt 0");
+		return;
+	}
+	
 	for (;;) {
 		uint32_t irq_mask = irq_save();
 		
 		if (mutex->owner == g_current_task) {
-			// double lock, panic
-			__asm volatile("bkpt 0");
-			return;
-		}
+            irq_restore(irq_mask);
+            return;
+        }
 		
 		if (!mutex->owner) {
 			mutex->owner = g_current_task;
@@ -57,7 +62,14 @@ void mutex_lock(mutex_t *mutex) {
 			return;
 		}
 		
+		if (mutex->owner->state == TASK_FREE) {
+			mutex->owner = g_current_task;
+			irq_restore(irq_mask);
+			return;
+		}
+		
 		g_current_task->state = TASK_BLOCKED;
+		ready_remove(g_current_task);
 		mutex_push(mutex, g_current_task);
 		irq_restore(irq_mask);
 		task_yield();
