@@ -39,6 +39,9 @@ static int i2c_init_impl(const i2c_config_t *cfg)
 	g_cfg = *cfg;
 	
     struct I2C_t *I2Cx = cfg->instance;
+	
+	BIT_CLEAR(I2Cx->CR1, I2C_CR1_SWRST);
+	BIT_SET(I2Cx->CR1, I2C_CR1_SWRST);
 
     // 1. Clock для GPIO (оба порта — могут быть разные)
     uint32_t scl_port_num = ((uint32_t)cfg->scl_port - GPIOA_BASE) / 0x400;
@@ -59,7 +62,7 @@ static int i2c_init_impl(const i2c_config_t *cfg)
     i2c_gpio_config(cfg->sda_port, cfg->sda_pin, cfg->sda_af);
 
     // 4. I2C: disable перед конфигом
-    I2Cx->CR1 &= ~I2C_CR1_PE;
+    // I2Cx->CR1 &= ~I2C_CR1_PE;
 	BIT_CLEAR(I2Cx->CR1, I2C_CR1_PE);
 
     // 5. CR2.FREQ = PCLK1 в МГц

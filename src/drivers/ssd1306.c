@@ -50,7 +50,7 @@ int ssd1306_init_impl(const ssd1306_config_t *cfg) {
     ssd1306_Reset();
 
     // Wait for the screen to boot
-    for (volatile uint32_t i = 0; i < 200000; i++);
+    for (volatile uint32_t i = 0; i < 1000000; i++);
 
     // Init OLED
     ssd1306_SetDisplayOn(0); //display off
