@@ -131,6 +131,9 @@ void memtest(void) {
 	task_exit();
 }
 
+int x = 0;
+int y = 0;
+
 void btntest(void) {
     for(;;) {
         mutex_lock(&print_lock);
@@ -143,9 +146,14 @@ void btntest(void) {
 			offset += s2ascii("\n", (str + offset));
 			str[offset] = '\0';
 			semihost_write(str, offset);
+			
+			ssd1306_DrawPixel(x, y, White);
+			ssd1306_UpdateScreen();
+			x++;
+			if (x > 127) { y++; }
 		}
 		
-		task_sleep(50);
+		task_sleep(1);
         mutex_unlock(&print_lock);
     }
 }
@@ -156,12 +164,12 @@ void scrtest(void) {
 		// 1. Проверка: экран белый на 1 сек
 		ssd1306_Fill(White);
 		ssd1306_UpdateScreen();
-		task_sleep(100);   // ~1 сек
+		task_sleep(250);
 
 		// 2. Проверка: экран чёрный
 		ssd1306_Fill(Black);
 		ssd1306_UpdateScreen();
-		task_sleep(100);
+		task_sleep(250);
 
 		// 3. Проверка: пиксели в углах
 		ssd1306_DrawPixel(0,   0,  White);   // левый верх
@@ -170,11 +178,16 @@ void scrtest(void) {
 		ssd1306_DrawPixel(127, 63, White);   // правый низ
 		ssd1306_DrawPixel(64,  32, White);   // центр
 		ssd1306_UpdateScreen();
-		task_sleep(100);
+		task_sleep(250);
 
 		// 4. Проверка: горизонтальная и вертикальная линии
 		for (uint8_t x = 0; x < 128; x++) ssd1306_DrawPixel(x, 10, White);
 		for (uint8_t y = 0; y < 64;  y++) ssd1306_DrawPixel(64, y, White);
+		ssd1306_UpdateScreen();
+		task_sleep(250);
+
+		// 2. Проверка: экран чёрный
+		ssd1306_Fill(Black);
 		ssd1306_UpdateScreen();
 		
 		task_exit();
@@ -208,7 +221,7 @@ int main()
 	
 	task_create("IDLE", idle_task, 128);
 	
-	// task_create("BTNT", btntest, 1024);
+	task_create("BTNT", btntest, 1024);
 	task_create("SCRT", scrtest, 1024);
 	
 	

@@ -1,4 +1,5 @@
 #include "debug/semihosting.h"
+#include "config.h"
 
 static int semihost_call(int reason, void *arg) {
 #if CONFIG_SEMIHOSTING
