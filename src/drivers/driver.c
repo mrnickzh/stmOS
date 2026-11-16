@@ -10,7 +10,7 @@ extern const driver_t button_driver;
 extern const driver_t i2c_driver;
 #endif
 #if CONFIG_OLED
-extern const driver_t oled_driver;
+extern const driver_t ssd1306_driver;
 #endif
 
 const driver_t *const g_drivers[] = {
@@ -18,7 +18,7 @@ const driver_t *const g_drivers[] = {
     &i2c_driver,
 #endif
 #if CONFIG_OLED
-    &oled_driver,
+    &ssd1306_driver,
 #endif
 #if CONFIG_BUTTONS
     &button_driver,

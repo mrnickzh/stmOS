@@ -8,7 +8,7 @@
 
 // drivers
 #define CONFIG_BUTTONS           1
-#define CONFIG_I2C               0
-#define CONFIG_OLED              0
+#define CONFIG_I2C               1
+#define CONFIG_SSD1306           1
 
 #endif // CONFIG_H

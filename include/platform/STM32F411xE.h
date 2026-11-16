@@ -112,6 +112,20 @@ struct USART_t
     volatile uint32_t GTPR; // Guard time and prescaler register.   Address offset: 0x18
 };
 
+// I2C peripheral registers structure
+struct I2C_t {
+	volatile uint32_t CR1;
+	volatile uint32_t CR2;
+	volatile uint32_t OAR1;
+	volatile uint32_t OAR2;
+	volatile uint32_t DR;
+	volatile uint32_t SR1;
+	volatile uint32_t SR2;
+	volatile uint32_t CCR;
+	volatile uint32_t TRISE;
+	volatile uint32_t FLTR;
+};
+
 // Peripheral base addresses
 #define GPIOA_BASE  0x40020000
 #define GPIOB_BASE  0x40020400
@@ -124,6 +138,9 @@ struct USART_t
 #define USART1_BASE 0x40011000
 #define USART2_BASE 0x40004400
 #define USART6_BASE 0x40011400
+#define I2C1_BASE 	0x40005400
+#define I2C2_BASE 	0x40005800
+#define I2C3_BASE 	0x40005C00
 
 // Peripheral declarations
 #define GPIOA   ((struct GPIO_t*)GPIOA_BASE)
@@ -137,6 +154,9 @@ struct USART_t
 #define USART1  ((struct USART_t*)USART1_BASE)
 #define USART2  ((struct USART_t*)USART2_BASE)
 #define USART6  ((struct USART_t*)USART6_BASE)
+#define I2C1    ((struct I2C_t*)I2C1_BASE)
+#define I2C2    ((struct I2C_t*)I2C2_BASE)
+#define I2C3    ((struct I2C_t*)I2C3_BASE)
 
 // Bit definitions for GPIO_MODER register
 #define GPIO_MODER_MODER13_MASK     (3UL << 26)
@@ -184,6 +204,9 @@ struct USART_t
 
 // Bit definitions for RCC_APB1ENR register
 #define RCC_APB1ENR_TIM2EN          (1UL << 0)  // TIM2 clock enable
+#define RCC_APB1ENR_I2C3EN          (1UL << 23) // I2C3 clock enable
+#define RCC_APB1ENR_I2C2EN          (1UL << 22) // I2C2 clock enable
+#define RCC_APB1ENR_I2C1EN          (1UL << 21) // I2C1 clock enable
 
 // Bit definitions for RCC_APB2ENR register
 #define RCC_APB2ENR_SPI5EN          (1UL << 20) // SPI5 clock enable
@@ -239,10 +262,68 @@ struct USART_t
 #define USART_CR1_RE                (1UL << 2)  // Receiver enable
 #define USART_CR1_RWU               (1UL << 1)  // Receiver wakeup
 
+// Bit definitions for I2C_CR1 register
+#define I2C_CR1_SWRST               (1UL << 15) // Software reset
+#define I2C_CR1_POS                 (1UL << 11) // ACK/PEC position (for 2-byte reads)
+#define I2C_CR1_ACK                 (1UL << 10) // Acknowledge enable
+#define I2C_CR1_STOP                (1UL << 9)  // Stop generation
+#define I2C_CR1_START               (1UL << 8)  // Start generation
+#define I2C_CR1_NOSTRETCH           (1UL << 7)  // Clock stretching disable
+#define I2C_CR1_PE                  (1UL << 0)  // Peripheral enable
+
+// Bit definitions for I2C_SR1 register
+#define I2C_SR1_TIMEOUT             (1UL << 14) // Timeout (SMBus)
+#define I2C_SR1_AF                  (1UL << 10) // Acknowledge failure
+#define I2C_SR1_ARLO                (1UL << 9)  // Arbitration lost
+#define I2C_SR1_BERR                (1UL << 8)  // Bus error
+#define I2C_SR1_TXE                 (1UL << 7)  // Data register empty (transmit)
+#define I2C_SR1_RXNE                (1UL << 6)  // Data register not empty (receive)
+#define I2C_SR1_STOPF               (1UL << 4)  // Stop detected (slave)
+#define I2C_SR1_ADD10               (1UL << 3)  // 10-bit header sent
+#define I2C_SR1_BTF                 (1UL << 2)  // Byte transfer finished
+#define I2C_SR1_ADDR                (1UL << 1)  // Address sent / matched
+#define I2C_SR1_SB                  (1UL << 0)  // Start bit (master)
+
+// Bit definitions for I2C_SR2 register
+#define I2C_SR2_BUSY                (1UL << 1)  // Bus busy
+#define I2C_SR2_MSL                 (1UL << 0)  // Master/slave mode
+
+// Bit definitions for I2C_CCR register
+#define I2C_CCR_FS                  (1UL << 15) // Fast mode
+#define I2C_CCR_DUTY                (1UL << 14) // Duty cycle (fast mode)
+
 // Bit manipulation macros
 #define BIT_SET(register, mask)     ((register) |= (mask))
 #define BIT_CLEAR(register, mask)   ((register) &= ~(mask))
 #define BIT_TOGGLE(register, mask)  ((register) ^= (mask))
 #define BIT_CHECK(register, mask)   ((register) & (mask))
+
+// Generic GPIO per-pin macros (pin: 0..15)
+#define GPIO_MODER_MASK(pin)            (3UL << ((pin) * 2))
+#define GPIO_MODER_INPUT(pin)           (0UL << ((pin) * 2))
+#define GPIO_MODER_OUTPUT(pin)          (1UL << ((pin) * 2))
+#define GPIO_MODER_AF(pin)              (2UL << ((pin) * 2))
+#define GPIO_MODER_ANALOG(pin)          (3UL << ((pin) * 2))
+
+#define GPIO_OTYPER_PUSH_PULL(pin)      (0UL << (pin))
+#define GPIO_OTYPER_OPEN_DRAIN(pin)     (1UL << (pin))
+
+#define GPIO_OSPEEDR_LOW(pin)           (0UL << ((pin) * 2))
+#define GPIO_OSPEEDR_MEDIUM(pin)        (1UL << ((pin) * 2))
+#define GPIO_OSPEEDR_HIGH(pin)          (2UL << ((pin) * 2))
+#define GPIO_OSPEEDR_VERY_HIGH(pin)     (3UL << ((pin) * 2))
+
+#define GPIO_PUPDR_NONE(pin)            (0UL << ((pin) * 2))
+#define GPIO_PUPDR_PULL_UP(pin)         (1UL << ((pin) * 2))
+#define GPIO_PUPDR_PULL_DOWN(pin)       (2UL << ((pin) * 2))
+
+// AF: 0-7 — AFRL, 8-15 — AFRH
+// AFRL &= ~GPIO_AF_MASK(6); AFRL |= (4 << (6*4));
+#define GPIO_AF_MASK(pin)               (0xFUL << (((pin) < 8 ? (pin) : (pin) - 8) * 4))
+
+// Bit field masks for I2C registers
+#define I2C_CR2_FREQ_MASK               0x3FU   // FREQ field (bits 0-5)
+#define I2C_CCR_CCR_MASK                0x0FFFU // CCR field (bits 0-11)
+#define I2C_TRISE_TRISE_MASK            0x3FU   // TRISE field (bits 0-5)
 
 #endif // STM32F411XE_H

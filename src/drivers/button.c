@@ -3,30 +3,32 @@
 
 #include "drivers/button.h"
 #include "drivers/driver.h"
-#include "scheduler/scheduler.h"
 
 static button_config_t g_cfg;
 static uint8_t g_initialized;
 
 static int button_init_impl(const button_config_t *cfg)
 {
+	g_cfg = *cfg;
+	
     uint32_t port_num = ((uint32_t)cfg->port - GPIOA_BASE) / 0x400;
     BIT_SET(RCC->AHB1ENR, (1UL << port_num));
     
     for (int i = 0; i < NUM_BTNS; i++) {
         uint8_t pin = cfg->pins[i];
-		BIT_CLEAR(cfg->port->MODER, (3UL << (pin * 2)));
+		BIT_CLEAR(cfg->port->MODER, GPIO_MODER_MASK(pin));
 		
 		if (cfg->active_low) {
-			BIT_CLEAR(cfg->port->PUPDR, (3UL << (pin * 2)));
-			BIT_SET(cfg->port->PUPDR, (1UL << (pin * 2)));
+			// button pulls up
+			BIT_CLEAR(cfg->port->PUPDR, GPIO_MODER_MASK(pin));
+			BIT_SET(cfg->port->PUPDR, GPIO_PUPDR_PULL_UP(pin));
 		} else {
-			BIT_CLEAR(cfg->port->PUPDR, (3UL << (pin * 2)));
-			BIT_SET(cfg->port->PUPDR, (2UL << (pin * 2)));
+			// button pulls down
+			BIT_CLEAR(cfg->port->PUPDR, GPIO_MODER_MASK(pin));
+			BIT_SET(cfg->port->PUPDR, GPIO_PUPDR_PULL_DOWN(pin));
 		}
     }
     
-    g_cfg = *cfg;
     g_initialized = 1;
     return 0;
 }

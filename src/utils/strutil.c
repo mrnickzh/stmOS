@@ -18,3 +18,15 @@ int strcomp(const char* first, const char* second)
 	}
 	return 0;
 }
+
+void memoryset(char* dst, int val, int len) 
+{
+	if (len <= 0) { return; }
+
+	while(len > 0)
+	{
+		*dst = val;
+		dst++;
+		len--;
+	}
+}

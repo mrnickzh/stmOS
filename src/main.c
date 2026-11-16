@@ -7,6 +7,7 @@
 #include "config.h"
 #include "platform/board.h"
 #include "drivers/button.h"
+#include "drivers/ssd1306.h"
 
 mutex_t print_lock;
 
@@ -149,6 +150,37 @@ void btntest(void) {
     }
 }
 
+void scrtest(void) {
+	for(;;) {
+		// ─── ТЕСТ SSD1306 ───
+		// 1. Проверка: экран белый на 1 сек
+		ssd1306_Fill(White);
+		ssd1306_UpdateScreen();
+		task_sleep(100);   // ~1 сек
+
+		// 2. Проверка: экран чёрный
+		ssd1306_Fill(Black);
+		ssd1306_UpdateScreen();
+		task_sleep(100);
+
+		// 3. Проверка: пиксели в углах
+		ssd1306_DrawPixel(0,   0,  White);   // левый верх
+		ssd1306_DrawPixel(127, 0,  White);   // правый верх
+		ssd1306_DrawPixel(0,   63, White);   // левый низ
+		ssd1306_DrawPixel(127, 63, White);   // правый низ
+		ssd1306_DrawPixel(64,  32, White);   // центр
+		ssd1306_UpdateScreen();
+		task_sleep(100);
+
+		// 4. Проверка: горизонтальная и вертикальная линии
+		for (uint8_t x = 0; x < 128; x++) ssd1306_DrawPixel(x, 10, White);
+		for (uint8_t y = 0; y < 64;  y++) ssd1306_DrawPixel(64, y, White);
+		ssd1306_UpdateScreen();
+		
+		task_exit();
+	}
+}
+
 int main()
 {
     HSE_Init();
@@ -176,7 +208,8 @@ int main()
 	
 	task_create("IDLE", idle_task, 128);
 	
-	task_create("BTNT", btntest, 1024);
+	// task_create("BTNT", btntest, 1024);
+	task_create("SCRT", scrtest, 1024);
 	
 	
 	// task_create("A", taska, 256);

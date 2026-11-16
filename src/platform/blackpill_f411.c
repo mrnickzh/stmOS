@@ -12,7 +12,7 @@ const button_config_t g_btn_cfg = {
 #endif
 
 #if CONFIG_I2C
-#include "drivers/i2c_stm32f4.h"
+#include "drivers/i2c.h"
 const i2c_config_t g_i2c1_cfg = {
     .instance   = I2C1,
     .scl_port   = GPIOB,
@@ -25,9 +25,9 @@ const i2c_config_t g_i2c1_cfg = {
 };
 #endif
 
-#if CONFIG_OLED
+#if CONFIG_SSD1306
 #include "drivers/ssd1306.h"
-const oled_config_t g_oled_cfg = {
+const ssd1306_config_t g_ssd1306_cfg = {
     .i2c_cfg    = &g_i2c1_cfg,
     .addr       = 0x3C,
     .width      = 128,
@@ -40,8 +40,8 @@ int board_init(void)
 #if CONFIG_I2C
     if (i2c_init(&g_i2c1_cfg) < 0) return -1;
 #endif
-#if CONFIG_OLED
-    if (oled_init(&g_oled_cfg) < 0) return -1;
+#if CONFIG_SSD1306
+    if (ssd1306_init(&g_ssd1306_cfg) < 0) return -1;
 #endif
 #if CONFIG_BUTTONS
     if (button_init(&g_btn_cfg) < 0) return -1;

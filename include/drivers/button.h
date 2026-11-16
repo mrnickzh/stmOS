@@ -14,8 +14,8 @@
 
 typedef struct {
     struct GPIO_t *port;
-    uint8_t       pins[NUM_BTNS];
-    uint8_t       active_low;
+    uint8_t pins[NUM_BTNS];
+    uint8_t active_low;
 } button_config_t;
 
 int button_init(const button_config_t *cfg);
@@ -24,4 +24,4 @@ uint32_t is_button_pressed(int idx);
 
 extern const driver_t button_driver;
 
-#endif
+#endif // BUTTON_H
