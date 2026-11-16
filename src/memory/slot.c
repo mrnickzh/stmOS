@@ -1,4 +1,5 @@
 #include "memory/slot.h"
+#include "platform/STM32F411xE.h"
 
 // const log2
 #define SLOT_ARENA_LOG2   16    // log2(64kb)
@@ -69,7 +70,8 @@ void *slot_alloc(uint32_t bytes)
     }
 
     int idx = __builtin_ctz(g_slot_free[find]);
-    g_slot_free[find] &= ~(1u << idx); // sets g_slot_free[class] bit to 0 with block idx, marks it as busy
+    // g_slot_free[find] &= ~(1u << idx);
+	BIT_CLEAR(g_slot_free[find], (1u << idx)); // sets g_slot_free[class] bit to 0 with block idx, marks it as busy
 
     uint32_t off = (uint32_t)idx * block_size(find);
 
@@ -81,7 +83,8 @@ void *slot_alloc(uint32_t bytes)
         uint32_t buddy = off + half;
         int    buddy_idx = (int)(buddy / half);
 
-        g_slot_free[find] |= (1u << buddy_idx); // sets g_slot_free[class] bit to 1 with buddy block idx, marks it as free
+        // g_slot_free[find] |= (1u << buddy_idx);
+		BIT_SET(g_slot_free[find], (1u << buddy_idx)); // sets g_slot_free[class] bit to 1 with buddy block idx, marks it as free
         // offset stays, using the upper half
     }
 
@@ -125,7 +128,8 @@ void slot_free(void *ptr, uint32_t bytes)
                 __asm volatile("bkpt 0"); // double free (merge)
                 return;
             }
-            a_off &= ~block_size(a); // going up the tree
+            // a_off &= ~block_size(a);
+			BIT_CLEAR(a_off, block_size(a)); // going up the tree
         }
     }
 
@@ -140,14 +144,17 @@ void slot_free(void *ptr, uint32_t bytes)
             break; // buddy not free
 
         // merge
-        g_slot_free[order] &= ~(1u << buddy_idx); // buddy taken
-        off &= ~size; // parent = lower
+        // g_slot_free[order] &= ~(1u << buddy_idx);
+        // off &= ~size;
+		BIT_CLEAR(g_slot_free[order], (1u << buddy_idx)); // buddy taken
+		BIT_CLEAR(off, size); // parent = lower
         order++;
     }
 
     // merged block marked as free
     idx = (int)(off / block_size(order));
-    g_slot_free[order] |= (1u << idx);
+    // g_slot_free[order] |= (1u << idx);
+	BIT_SET(g_slot_free[order], (1u << idx));
 
     irq_restore(irq_mask);
 }

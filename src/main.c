@@ -4,6 +4,9 @@
 #include "utils/num2ascii.h"
 #include "debug/semihosting.h"
 #include "memory/slot.h"
+#include "config.h"
+#include "platform/board.h"
+#include "drivers/button.h"
 
 mutex_t print_lock;
 
@@ -127,12 +130,29 @@ void memtest(void) {
 	task_exit();
 }
 
+void btntest(void) {
+    for(;;) {
+        mutex_lock(&print_lock);
+		
+		if (is_button_pressed(0)) {
+			int offset = 0;
+			char str[64];
+			offset += s2ascii("button press at systick: ", (str + offset));
+			offset += ui2ascii(systick_counter, (str + offset));
+			offset += s2ascii("\n", (str + offset));
+			str[offset] = '\0';
+			semihost_write(str, offset);
+		}
+		
+		task_sleep(50);
+        mutex_unlock(&print_lock);
+    }
+}
+
 int main()
 {
     HSE_Init();
-	
 	scheduler_init();
-	SysTick_Init();
 	
 	// TIM2_Init();
 
@@ -143,6 +163,9 @@ int main()
     // BIT_CLEAR(GPIOC->MODER, GPIO_MODER_MODER13_MASK);
     // BIT_SET(GPIOC->MODER, GPIO_MODER_MODER13_OUTPUT);
 	
+	slot_init();
+	board_init();
+	
 	{
 		int offset = 0;
 		char str[128];
@@ -151,16 +174,16 @@ int main()
 		semihost_write(str, offset);
 	}
 	
-	slot_init();
-	
 	task_create("IDLE", idle_task, 128);
 	
-	// task_create("MEMT", memtest, 2048);
+	task_create("BTNT", btntest, 1024);
+	
 	
 	// task_create("A", taska, 256);
-    task_create("B", taskb, 256);
-	task_create("C", taskc, 256);
+    // task_create("B", taskb, 256);
+	// task_create("C", taskc, 256);
 
+	SysTick_Init();
     scheduler_start();
 
     while (1)

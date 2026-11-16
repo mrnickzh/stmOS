@@ -3,6 +3,7 @@
 #include "handlers/int_handlers.h"
 #include "memory/stack.h"
 #include "platform/Cortex-M4.h"
+#include "platform/STM32F411xE.h"
 
 task_ctx_t g_tasks_pool[MAX_TASKS] __attribute__((aligned(8)));
 uint32_t g_tasks_bitmap = 0;
@@ -19,7 +20,8 @@ void idle_task(void) {
 
 // MUTEX
 
-void mutex_push(mutex_t *mutex, task_ctx_t *task) {
+void mutex_push(mutex_t *mutex, task_ctx_t *task) 
+{
 	task->next = NULL;
 	if (mutex->waiters_tail) {
 		mutex->waiters_tail->next = task;
@@ -29,7 +31,8 @@ void mutex_push(mutex_t *mutex, task_ctx_t *task) {
 	mutex->waiters_tail = task;
 }
 
-task_ctx_t *mutex_pop(mutex_t *mutex) {
+task_ctx_t *mutex_pop(mutex_t *mutex) 
+{
 	task_ctx_t *task = mutex->waiters_head;
 	if (!task) return NULL;
 
@@ -41,7 +44,8 @@ task_ctx_t *mutex_pop(mutex_t *mutex) {
 	return task;
 }
 
-void mutex_lock(mutex_t *mutex) {
+void mutex_lock(mutex_t *mutex) 
+{
 	if (mutex->owner == g_current_task) {
 		// double lock, panic
 		__asm volatile("bkpt 0");
@@ -76,7 +80,8 @@ void mutex_lock(mutex_t *mutex) {
 	}
 }
 
-void mutex_unlock(mutex_t *mutex) {
+void mutex_unlock(mutex_t *mutex) 
+{
 	uint32_t irq_mask = irq_save();
 
 	if (mutex->owner != g_current_task) {
@@ -105,7 +110,8 @@ static task_ctx_t *task_alloc(void)
     uint32_t free_bits = ~g_tasks_bitmap;
     if (!free_bits) { irq_restore(irq_mask); return 0; }
     int i = __builtin_ctz(free_bits);
-    g_tasks_bitmap |= (1u << i);
+    // g_tasks_bitmap |= (1u << i);
+	BIT_SET(g_tasks_bitmap, (1u << i));
     irq_restore(irq_mask);
     return &g_tasks_pool[i];
 }
@@ -114,7 +120,8 @@ static void task_free(task_ctx_t *task)
 {
     int i = task - g_tasks_pool;
     uint32_t irq_mask = irq_save();
-    g_tasks_bitmap &= ~(1u << i);
+    // g_tasks_bitmap &= ~(1u << i);
+	BIT_CLEAR(g_tasks_bitmap, (1u << i));
     irq_restore(irq_mask);
 }
 
@@ -256,7 +263,8 @@ void task_exit()
     while (1);   
 }
 
-void task_sleep(uint32_t ms) {
+void task_sleep(uint32_t ms) 
+{
     task_ctx_t *task = g_current_task;
     if (!task || ms == 0) {
         task_yield();   // ms 0, skip

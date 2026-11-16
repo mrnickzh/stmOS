@@ -13,19 +13,22 @@ uint32_t  g_stack_pool[STACK_POOL_WORDS] __attribute__((aligned(8)));
 uint32_t *g_stack_brk = 0;
 uint32_t *g_stack_free[STACK_NUM_CLASSES] = { 0 };
 
-int stack_class_index(uint32_t bytes) {
+int stack_class_index(uint32_t bytes) 
+{
     uint32_t words = (bytes + 7u) / 8u * 2u;
     for (int i = 0; i < STACK_NUM_CLASSES; i++)
         if (words <= g_class_words[i]) return i;
     return -1;
 }
 
-void stack_pool_init(void) {
+void stack_pool_init(void) 
+{
     g_stack_brk = g_stack_pool;
     for (int i = 0; i < STACK_NUM_CLASSES; i++) g_stack_free[i] = 0;
 }
 
-uint32_t *stack_alloc(uint32_t bytes) {
+uint32_t *stack_alloc(uint32_t bytes) 
+{
     int cls = stack_class_index(bytes);
     if (cls < 0) return 0;
 	
@@ -53,7 +56,8 @@ uint32_t *stack_alloc(uint32_t bytes) {
 	return base;
 }
 
-void stack_free(uint32_t *base, uint32_t bytes) {
+void stack_free(uint32_t *base, uint32_t bytes) 
+{
     if (!base) return;
     int cls = stack_class_index(bytes);
     if (cls < 0) return;
@@ -70,7 +74,8 @@ void stack_free(uint32_t *base, uint32_t bytes) {
     irq_restore(irq_mask);
 }
 
-uint32_t stack_peak_usage(uint32_t *base, uint32_t words) {
+uint32_t stack_peak_usage(uint32_t *base, uint32_t words) 
+{
     uint32_t i = 1;   // skip canary
     while (i < words && base[i] == STACK_PAINT) i++;
     return (words - i) * 4;

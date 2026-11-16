@@ -2,23 +2,16 @@
 
 static char hex_char[] = "0123456789ABCDEF";
 
-void strncopy(char* dst, char* src, int i) {
-	if (i <= 0) { return; }
-    while (i--) { *dst++ = *src++; };
-}
-
-void strcopy(char* dst, char* src) {
-    while (*dst++ = *src++) {};
-}
-
-int s2ascii(const char *s, char *str) {
+int s2ascii(const char *s, char *str) 
+{
     int i = 0;
     if (!s) s = "(null)";
     while (*s) { *str++ = *s++; i++; }
     return i;
 }
 
-int ui2ascii(unsigned int num, char* str) {
+int ui2ascii(unsigned int num, char* str) 
+{
     int i = 0;
     int i2 = 0;
     
@@ -35,7 +28,8 @@ int ui2ascii(unsigned int num, char* str) {
     return i2;
 }
 
-int i2ascii(int num, char* str) {
+int i2ascii(int num, char* str) 
+{
     if (num < 0) {
         *str++ = '-';
         unsigned int uint = (unsigned)num;
@@ -45,7 +39,8 @@ int i2ascii(int num, char* str) {
     return ui2ascii((unsigned)num, str);
 }
 
-int i2hex(int num, char* str) {
+int i2hex(int num, char* str) 
+{
     int i = 0;
     int i2 = 0;
     
@@ -64,7 +59,8 @@ int i2hex(int num, char* str) {
     return i2;
 }
 
-int i2bin(int num, char* str) {
+int i2bin(int num, char* str) 
+{
     int i = 0;
     int i2 = 0;
     
@@ -83,7 +79,8 @@ int i2bin(int num, char* str) {
     return i2;
 }
 
-int f2ascii(float num, char* str, int prec) {
+int f2ascii(float num, char* str, int prec) 
+{
     int i = 0;
     
     float rnd = 0.5;
