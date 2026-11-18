@@ -36,7 +36,12 @@ static int uint32_to_order(uint32_t bytes)
 
 static inline uint32_t buddy_offset(uint32_t off, int order)
 {
-    return off ^ block_size(order);
+    return off ^ order;
+}
+
+uint32_t order_bitmap(int order)
+{
+    return g_slot_free[order];
 }
 
 void slot_init(void)
@@ -80,8 +85,8 @@ void *slot_alloc(uint32_t bytes)
         find--;
         uint32_t half = block_size(find);
 
-        uint32_t buddy = off + half;
-        int    buddy_idx = (int)(buddy / half);
+        uint32_t buddy = buddy_offset(off, half);
+        int buddy_idx = (int)(buddy / half);
 
         // g_slot_free[find] |= (1u << buddy_idx);
 		BIT_SET(g_slot_free[find], (1u << buddy_idx)); // sets g_slot_free[class] bit to 1 with buddy block idx, marks it as free
@@ -136,7 +141,7 @@ void slot_free(void *ptr, uint32_t bytes)
     // merge
     while (order < SLOT_ORDER_COUNT - 1) {
         uint32_t size  = block_size(order);
-        uint32_t buddy = off + size;
+        uint32_t buddy = buddy_offset(off, size);
         if (buddy >= SLOT_ARENA_SIZE) break; // biggest block
 
         int buddy_idx = (int)(buddy / size);

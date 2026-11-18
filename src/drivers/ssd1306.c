@@ -3,8 +3,6 @@
 
 #include "drivers/i2c.h"
 #include "drivers/ssd1306.h"
-#include <math.h>
-#include <stdlib.h>
 #include "utils/strutil.h"
 
 static ssd1306_config_t g_cfg;
@@ -134,7 +132,7 @@ int ssd1306_init_impl(const ssd1306_config_t *cfg) {
     ssd1306_SetDisplayOn(1); //--turn on SSD1306 panel
 
     // Clear screen
-    ssd1306_Fill(Black);
+    ssd1306_Fill(COLOR_BLACK);
     
     // Flush buffer to screen
     ssd1306_UpdateScreen();
@@ -151,7 +149,7 @@ int ssd1306_init_impl(const ssd1306_config_t *cfg) {
 
 /* Fill the whole screen with the given color */
 void ssd1306_Fill(SSD1306_COLOR color) {
-    memoryset((char*)SSD1306_Buffer, (color == Black) ? 0x00 : 0xFF, sizeof(SSD1306_Buffer));
+    memoryset((char*)SSD1306_Buffer, (color == COLOR_BLACK) ? 0x00 : 0xFF, sizeof(SSD1306_Buffer));
 }
 
 /* Write the screenbuffer with changed to the screen */
@@ -183,11 +181,35 @@ void ssd1306_DrawPixel(uint8_t x, uint8_t y, SSD1306_COLOR color) {
     }
    
     // Draw in the right color
-    if(color == White) {
+    if(color == COLOR_WHITE) {
         SSD1306_Buffer[x + (y / 8) * SSD1306_WIDTH] |= 1 << (y % 8);
     } else { 
         SSD1306_Buffer[x + (y / 8) * SSD1306_WIDTH] &= ~(1 << (y % 8));
     }
+}
+
+// LSB format!!!
+void ssd1306_DrawBitmap(uint8_t x, uint8_t y, const unsigned char* bitmap, uint8_t w, uint8_t h, SSD1306_COLOR color) {
+    int16_t byteWidth = (w + 7) / 8; // Bitmap scanline pad = whole byte
+    uint8_t byte = 0;
+
+    if (x >= SSD1306_WIDTH || y >= SSD1306_HEIGHT) {
+        return;
+    }
+
+    for (uint8_t j = 0; j < h; j++, y++) {
+        for (uint8_t i = 0; i < w; i++) {
+            if (i & 7) {
+                byte >>= 1;
+            } else {
+                byte = (*(const unsigned char *)(&bitmap[j * byteWidth + i / 8]));
+            }
+			
+			if (byte & 0x01) { ssd1306_DrawPixel(x + i, y, color); }
+			else { ssd1306_DrawPixel(x + i, y, !(color)); }
+        }
+    }
+    return;
 }
 
 void ssd1306_SetContrast(const uint8_t value) {

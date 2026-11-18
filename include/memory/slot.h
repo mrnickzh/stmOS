@@ -27,5 +27,6 @@
 void slot_init(void);
 void *slot_alloc(uint32_t bytes);
 void slot_free(void *ptr, uint32_t bytes);
+uint32_t order_bitmap(int order);
 
 #endif // SLOT_H
