@@ -45,6 +45,14 @@ static void term_newline() {
     }
 }
 
+void term_delchar() {
+	if (col > 0) {
+		uint8_t real_row = (head_row + row) % TERM_ROWS;
+		col--;
+		term_buf[real_row][col] = 0;
+	}
+}
+
 void term_putchar(unsigned char c) {
 	if (c == '\n') {
 		term_newline();

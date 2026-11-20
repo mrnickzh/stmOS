@@ -10,6 +10,7 @@
 #include "drivers/ssd1306.h"
 #include "shell/term.h"
 #include "shell/vkbd.h"
+#include "shell/shell.h"
 
 mutex_t print_lock;
 
@@ -179,52 +180,17 @@ void memtest(void) {
 	task_exit();
 }
 
-void scrtest(void) {
-	for(;;) {
-		// ─── ТЕСТ SSD1306 ───
-		// 1. Проверка: экран белый на 1 сек
-		ssd1306_Fill(COLOR_WHITE);
-		ssd1306_UpdateScreen();
-		task_sleep(250);
-
-		// 2. Проверка: экран чёрный
-		ssd1306_Fill(COLOR_BLACK);
-		ssd1306_UpdateScreen();
-		task_sleep(250);
-
-		// 3. Проверка: пиксели в углах
-		ssd1306_DrawPixel(0,   0,  COLOR_WHITE);   // левый верх
-		ssd1306_DrawPixel(127, 0,  COLOR_WHITE);   // правый верх
-		ssd1306_DrawPixel(0,   63, COLOR_WHITE);   // левый низ
-		ssd1306_DrawPixel(127, 63, COLOR_WHITE);   // правый низ
-		ssd1306_DrawPixel(64,  32, COLOR_WHITE);   // центр
-		ssd1306_UpdateScreen();
-		task_sleep(250);
-
-		// 4. Проверка: горизонтальная и вертикальная линии
-		for (uint8_t x = 0; x < 128; x++) ssd1306_DrawPixel(x, 10, COLOR_WHITE);
-		for (uint8_t y = 0; y < 64;  y++) ssd1306_DrawPixel(64, y, COLOR_WHITE);
-		ssd1306_UpdateScreen();
-		task_sleep(250);
-
-		// 2. Проверка: экран чёрный
-		ssd1306_Fill(COLOR_BLACK);
-		ssd1306_UpdateScreen();
-		
-		task_exit();
-	}
-}
-
 // temporary shell
 void tmpshell(void) {
+	term_putstring("> ");
     for(;;) {
 		int symbol = 0;
 		
 		if (is_button_pressed(0)) {
-			right_kbd();
+			left_kbd();
 		}
 		else if (is_button_pressed(1)) {
-			left_kbd();
+			right_kbd();
 		}
 		else if (is_button_pressed(2)) {
 			scroll_kbd();
@@ -241,7 +207,7 @@ void tmpshell(void) {
 		// str[offset] = '\0';
 		// semihost_write(str, offset);
 		
-		if (symbol > 0) { term_putchar((unsigned char)symbol); }
+		if (symbol > 0) { shell_input(symbol); }
 		term_update();
     }
 }

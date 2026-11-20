@@ -9,10 +9,18 @@ static const char kbd_icons[3][8] = {
 };
 
 static const char kbd_rows[KB_ROWS][KB_COLS] = {
-    {'1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '+'},
+    {'`', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '='},
     {'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\\'},
     {'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', ',', '.'},
-    {'z', 'x', 'c', 'v', 'b', 'n', 'm', ' ', '/', '?', '!', '@', '#'}
+    {'z', 'x', 'c', 'v', 'b', 'n', 'm', ' ', '/', '<', '>', '{', '}'}
+};
+
+
+static const char kbd_rows_shift[KB_ROWS][KB_COLS] = {
+    {'~', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+'},
+    {'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}', '|'},
+    {'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ':', '"', '<', '>'},
+    {'Z', 'X', 'C', 'V', 'B', 'N', 'M', ' ', '?', ',', '.', '[', ']'}
 };
 
 uint8_t row;
@@ -23,8 +31,14 @@ uint8_t caps = 0;
 void draw_kbd() {
 	// regular keys
 	for (int x = 0; x < KB_COLS; x++) {
-		char c = kbd_rows[row][x];
-		if (caps && (c >= 'a' && c <= 'z')) { c = c - ('a' - 'A'); }
+		char c;
+		if (caps) {
+			c = kbd_rows_shift[row][x];
+		}
+		else {
+			c = kbd_rows[row][x];
+		}
+
 		SSD1306_COLOR clr = (x == col ? COLOR_BLACK : COLOR_WHITE);
 		ssd1306_DrawBitmap(x*8, 7*8, (unsigned char*)font8x8_basic[(unsigned char)c], 8, 8, clr);
 	}
@@ -51,8 +65,13 @@ void scroll_kbd() {
 int select_kbd() {
 	// regular keys
 	if (col < 13) {
-		char c = kbd_rows[row][col];
-		if (caps && (c >= 'a' && c <= 'z')) { c = c - ('a' - 'A'); }
+		char c;
+		if (caps) {
+			c = kbd_rows_shift[row][col];
+		}
+		else {
+			c = kbd_rows[row][col];
+		}
 		return c;
 	}
 	// special keys
@@ -63,7 +82,7 @@ int select_kbd() {
 				caps = !caps;
 				return -1;
 			case 1:
-				return -1;
+				return '\b';
 			case 2:
 				return '\n';
 		}

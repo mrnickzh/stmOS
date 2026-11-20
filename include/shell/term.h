@@ -6,6 +6,7 @@
 
 void term_clear();
 void term_update();
+void term_delchar();
 void term_putchar(unsigned char c);
 void term_putstring(unsigned char *str);
 
