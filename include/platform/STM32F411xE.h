@@ -292,12 +292,6 @@ struct I2C_t {
 #define I2C_CCR_FS                  (1UL << 15) // Fast mode
 #define I2C_CCR_DUTY                (1UL << 14) // Duty cycle (fast mode)
 
-// Bit manipulation macros
-#define BIT_SET(register, mask)     ((register) |= (mask))
-#define BIT_CLEAR(register, mask)   ((register) &= ~(mask))
-#define BIT_TOGGLE(register, mask)  ((register) ^= (mask))
-#define BIT_CHECK(register, mask)   ((register) & (mask))
-
 // Generic GPIO per-pin macros (pin: 0..15)
 #define GPIO_MODER_MASK(pin)            (3UL << ((pin) * 2))
 #define GPIO_MODER_INPUT(pin)           (0UL << ((pin) * 2))
@@ -325,5 +319,11 @@ struct I2C_t {
 #define I2C_CR2_FREQ_MASK               0x3FU   // FREQ field (bits 0-5)
 #define I2C_CCR_CCR_MASK                0x0FFFU // CCR field (bits 0-11)
 #define I2C_TRISE_TRISE_MASK            0x3FU   // TRISE field (bits 0-5)
+
+// Bit manipulation macros
+#define BIT_SET(register, mask)     ((register) |= (mask))
+#define BIT_CLEAR(register, mask)   ((register) &= ~(mask))
+#define BIT_TOGGLE(register, mask)  ((register) ^= (mask))
+#define BIT_CHECK(register, mask)   ((register) & (mask))
 
 #endif // STM32F411XE_H

@@ -3,7 +3,7 @@
 #include "scheduler/scheduler.h"
 #include "utils/num2ascii.h"
 #include "debug/semihosting.h"
-#include "memory/slot.h"
+#include "memory/page.h"
 #include "config.h"
 #include "platform/board.h"
 #include "drivers/button.h"
@@ -67,68 +67,36 @@ void taskc(void) {
 }
 
 void memtest(void) {
-	mutex_lock(&print_lock);
+	{
+		int offset = 0;
+		char str[128];
+		offset += s2ascii("KERNEL LIVE!\n", (str + offset));
+		str[offset] = '\0';
+		semihost_write(str, offset);
+	}
 	
 	void *ptrs[32] = {0};
-	for (int round = 0; round < 10; round++) {
+	for (int round = 0; round < 4; round++) {
 		// alloc
 		for (int i = 0; i < 8; i++) {
-			uint32_t sz = 2048 << (round & 3);
-			ptrs[i] = slot_alloc(sz);
+			uint32_t sz = 2 * round;
+			ptrs[i] = page_alloc(sz);
 			
 			int offset = 0;
 			char str[128];
-			offset += s2ascii("alloc ", (str + offset));
-			offset += i2ascii(sz, (str + offset));
-			offset += s2ascii(" b addr ", (str + offset));
-			offset += i2hex((uint32_t)ptrs[i], (str + offset));
+			offset += s2ascii("alloc addr: 0x", (str + offset));
+			offset += i2hex((uint32_t)(ptrs[i]), (str + offset));
 			offset += s2ascii("\n", (str + offset));
 			str[offset] = '\0';
 			semihost_write(str, offset);
 		}
-		
-		for (int o = 0; o < 5; o++) {
-			int offset = 0;
-			char str[128];
-			offset += s2ascii("order [", (str + offset));
-			offset += i2ascii(o, (str + offset));
-			offset += s2ascii("] busy bitmap: 0b", (str + offset));
-			offset += i2bin(order_bitmap(o), (str + offset));
-			offset += s2ascii("\n", (str + offset));
-			str[offset] = '\0';
-			semihost_write(str, offset);
-		}
-		
 		// free
 		for (int i = 7; i >= 0; i--) {
-			uint32_t sz = 2048 << (round & 3);
-			if (ptrs[i]) { slot_free(ptrs[i], sz); ptrs[i] = 0; }
-			
-			int offset = 0;
-			char str[128];
-			offset += s2ascii("free ", (str + offset));
-			offset += i2ascii(sz, (str + offset));
-			offset += s2ascii(" b addr ", (str + offset));
-			offset += i2hex((uint32_t)ptrs[i], (str + offset));
-			offset += s2ascii("\n", (str + offset));
-			str[offset] = '\0';
-			semihost_write(str, offset);
-		}
-		
-		for (int o = 0; o < 5; o++) {
-			int offset = 0;
-			char str[128];
-			offset += s2ascii("order [", (str + offset));
-			offset += i2ascii(o, (str + offset));
-			offset += s2ascii("] clean bitmap: 0b", (str + offset));
-			offset += i2bin(order_bitmap(o), (str + offset));
-			offset += s2ascii("\n", (str + offset));
-			str[offset] = '\0';
-			semihost_write(str, offset);
+			if (ptrs[i]) { page_free(ptrs[i], 2 * round); ptrs[i] = 0; }
 		}
 	}
 	
-	void *slot1 = slot_alloc(2048);
+	void *slot1 = page_alloc(2);;
 	{
 		int offset = 0;
 		char str[128];
@@ -139,7 +107,7 @@ void memtest(void) {
 		semihost_write(str, offset);
 	}
 	
-	void *slot2 = slot_alloc(2048);
+	void *slot2 = page_alloc(2);;
 	{
 		int offset = 0;
 		char str[128];
@@ -150,7 +118,7 @@ void memtest(void) {
 		semihost_write(str, offset);
 	}
 	
-	void *slot3 = slot_alloc(4096);
+	void *slot3 = page_alloc(4);;
 	{
 		int offset = 0;
 		char str[128];
@@ -161,10 +129,10 @@ void memtest(void) {
 		semihost_write(str, offset);
 	}
 	
-	slot_free(slot2, 2048);
-	slot_free(slot1, 2048);
+	page_free(slot2, 2);
+	page_free(slot1, 2);
 	
-	void *slot4 = slot_alloc(2048);
+	void *slot4 = page_alloc(2);
 	{
 		int offset = 0;
 		char str[128];
@@ -174,8 +142,6 @@ void memtest(void) {
 		str[offset] = '\0';
 		semihost_write(str, offset);
 	}
-	
-	mutex_unlock(&print_lock);
 	
 	task_exit();
 }
@@ -226,7 +192,7 @@ int main()
     // BIT_CLEAR(GPIOC->MODER, GPIO_MODER_MODER13_MASK);
     // BIT_SET(GPIOC->MODER, GPIO_MODER_MODER13_OUTPUT);
 	
-	slot_init();
+	page_init();
 	board_init();
 	
 	{
@@ -239,7 +205,7 @@ int main()
 	
 	task_create("IDLE", idle_task, 128);
 	
-	//task_create("SCRT", scrtest, 1024);
+	// task_create("SCRT", scrtest, 1024);
 	// task_create("MEMT", memtest, 1024);
 	
 	task_create("SHLL", tmpshell, 2048);

@@ -26,7 +26,7 @@ vpath %.S $(SRC_DIRS)
 CPU = -mcpu=cortex-m4 -mthumb
 
 ASFLAGS  =
-CFLAGS   = $(CPU) -Wall -Wextra -Wpedantic -std=c11 -g -O2 -DOS_DEBUG
+CFLAGS   = $(CPU) -Wall -Wextra -Wpedantic -std=c99 -g -O2
 CPPFLAGS = -MMD -MP -Iinclude
 LDFLAGS  = $(CPU) -Tlinker/STM32F411xE.ld -nostartfiles
 LDLIBS   =
