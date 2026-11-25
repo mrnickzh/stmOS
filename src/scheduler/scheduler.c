@@ -1,9 +1,11 @@
 #include "scheduler/scheduler.h"
 
 #include "handlers/int_handlers.h"
+#include "utils/syscall.h"
 #include "memory/stack.h"
 #include "platform/Cortex-M4.h"
 #include "platform/STM32F411xE.h"
+#include "memory/page.h"
 
 task_ctx_t g_tasks_pool[MAX_TASKS] __attribute__((aligned(8)));
 uint32_t g_tasks_bitmap = 0;
@@ -104,7 +106,7 @@ void mutex_unlock(mutex_t *mutex)
 }
 
 // TASK POOL
-static task_ctx_t *task_alloc(void)
+static task_ctx_t *task_alloc(int *pid)
 {
     uint32_t irq_mask = irq_save();
     uint32_t free_bits = ~g_tasks_bitmap;
@@ -113,6 +115,7 @@ static task_ctx_t *task_alloc(void)
     // g_tasks_bitmap |= (1u << i);
 	BIT_SET(g_tasks_bitmap, (1u << i));
     irq_restore(irq_mask);
+	*pid = i;
     return &g_tasks_pool[i];
 }
 
@@ -171,9 +174,21 @@ void blocked_remove(task_ctx_t *task)
     else { g_blocked_list = p->next; }
 }
 
+task_ctx_t *task_by_pid(int pid) 
+{
+	int taken = g_tasks_bitmap << (1u << pid);
+	if (taken) {
+		return &(g_tasks_pool[pid]);
+	}
+	else {
+		return 0;
+	}
+}
+
 int task_create(const char *name, void (*entry)(void), uint32_t stack_bytes)
 {	
-    task_ctx_t *task = task_alloc();
+	int pid;
+    task_ctx_t *task = task_alloc(&pid);
     if (!task) return -1;
 	
 	uint32_t *stack = stack_alloc(stack_bytes);
@@ -213,30 +228,41 @@ int task_create(const char *name, void (*entry)(void), uint32_t stack_bytes)
     ready_push(task);
     irq_restore(irq_mask);
 	
-	return 0;
+	return pid;
 }
 
 task_ctx_t *schedule(void)
 {
+	task_ctx_t *old = g_current_task;
+	
 	if (!g_ready_list) return 0;
     
-    if (g_current_task && g_current_task->state == TASK_RUNNING) {
-        g_current_task->state = TASK_READY;
+    if (old && old->state == TASK_RUNNING) {
+        old->state = TASK_READY;
     }
     
-    if (!g_current_task || g_current_task->state == TASK_BLOCKED) {
+    if (!old || old->state == TASK_BLOCKED || old->state == TASK_FREE) {
         g_current_task = g_ready_list;
     } else {
-        g_current_task = g_current_task->next;
+        g_current_task = old->next;
+    }
+	
+	g_current_task->state = TASK_RUNNING;
+	
+	if (old && old->state == TASK_FREE) {
+        stack_free(old->stack_base, old->stack_words * 4);
+        if (old->prog_pages > 0) {
+            page_free((void *)old->prog_base, old->prog_pages);
+        }
+        task_free(old);
     }
     
-    g_current_task->state = TASK_RUNNING;
     return g_current_task;
 }
 
 void task_yield(void)
 {
-    __asm volatile("svc 0" ::: "memory");
+	syscall(SYS_YIELD, 0, 0, 0);
 }
 
 void task_exit()
@@ -252,10 +278,6 @@ void task_exit()
         ready_remove(task);
     }
     task->state = TASK_FREE;
-    if (g_current_task == task) g_current_task = 0;
-	
-	stack_free(task->stack_base, task->stack_words * 4);
-    task_free(task);
 
     *(volatile uint32_t *)PENDSVSET = (1u << 28);  // PendSV
 	
@@ -271,14 +293,14 @@ void task_sleep(uint32_t ms)
         return;
     }
     
-    uint32_t pm = irq_save();
+    uint32_t irq_mask = irq_save();
     task->state    = TASK_BLOCKED;
     task->wake_at  = systick_counter + ms;
 	
 	ready_remove(task);
     blocked_push(task);
 	
-    irq_restore(pm);
+    irq_restore(irq_mask);
     
     task_yield(); // svc 0
 }
@@ -305,7 +327,7 @@ void scheduler_start(void)
         // no tasks = loop
         while (1);
     }
-
-    __asm volatile("svc 0");
+	
+	syscall(SYS_YIELD, 0, 0, 0);
     while (1);
 }

@@ -4,31 +4,26 @@
 
 .global SVC_Handler
 .global PendSV_Handler
-
-@ SVC_Handler: scheduler start
+	
+@ supervisor call (syscall) handler
 .thumb_func
 .type SVC_Handler, "function"
 SVC_Handler:
-    ldr  r0, =g_current_task
-    ldr  r1, [r0]
-    cbz  r1, 1f                  @ g_current_task < 0 = first start
-
-    @ yield
-    ldr  r2, =0xE000ED04     @ ICSR
-    mov  r3, #(1 << 28)      @ PENDSVSET
-    str  r3, [r2]
-    bx   lr
-
-1:  bl   schedule
-    ldr  r1, [r0]
-	
-	@ load task
-    ldmia r1!, {r4-r11}
-    msr  psp, r1
-	
-    isb
-    ldr  lr, =0xFFFFFFFD @ EXC_RETURN: Thread mode, PSP
-    bx   lr
+    @ MSP or PSP
+    tst   lr, #4                @ EXC_RETURN bit 2 (0b0100)
+    ite   eq
+    mrseq r0, msp               @ 0 MSP
+    mrsne r0, psp               @ 4 PSP
+    
+    @ save EXC_RETURN
+    push  {lr}
+    
+    @ call C handler
+    bl    syscall_handler
+    
+    @ restore EXC_RETURN
+    pop   {lr}
+    bx    lr
 
 @ PendSV_Handler: ctx switch
 .thumb_func

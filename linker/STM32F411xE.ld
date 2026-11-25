@@ -19,7 +19,7 @@ SECTIONS {
 	} > FLASH
 
     .stack (NOLOAD) : {
-        . = . + 0x400;
+        . = . + 0x800;
         __stack_end = .;
     } > SRAM
 
@@ -37,5 +37,17 @@ SECTIONS {
         *(.bss)
         . = ALIGN(4);
         __bss_end = .;
+    } > SRAM
+	
+	.stack_pool (NOLOAD) : ALIGN(8) {
+        _stack_pool_start = .;
+        KEEP(*(.stack_pool))
+        _stack_pool_end = .;
+    } > SRAM
+	
+	.page_pool (NOLOAD) : ALIGN(8) {
+        _page_pool_start = .;
+        KEEP(*(.page_pool))
+        _page_pool_end = .;
     } > SRAM
 }

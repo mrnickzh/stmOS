@@ -14,67 +14,7 @@
 
 mutex_t print_lock;
 
-void taska(void) {
-    for(;;) {
-        mutex_lock(&print_lock);
-		
-        int offset = 0;
-		char str[64];
-		offset += s2ascii("[Task A] systick: ", (str + offset));
-		offset += ui2ascii(systick_counter, (str + offset));
-		offset += s2ascii("\n", (str + offset));
-		str[offset] = '\0';
-		semihost_write(str, offset);
-		
-        mutex_unlock(&print_lock);
-		
-        task_sleep(100);
-    }
-}
-
-void taskb(void) {
-    for(;;) {
-        mutex_lock(&print_lock);
-		
-        int offset = 0;
-		char str[64];
-		offset += s2ascii("[Task B] systick: ", (str + offset));
-		offset += ui2ascii(systick_counter, (str + offset));
-		offset += s2ascii("\n", (str + offset));
-		str[offset] = '\0';
-		semihost_write(str, offset);
-		
-		task_sleep(100);
-        mutex_unlock(&print_lock);
-    }
-}
-
-void taskc(void) {
-    for(;;) {
-        mutex_lock(&print_lock);
-		
-        int offset = 0;
-		char str[64];
-		offset += s2ascii("[Task C] systick: ", (str + offset));
-		offset += ui2ascii(systick_counter, (str + offset));
-		offset += s2ascii("\n", (str + offset));
-		str[offset] = '\0';
-		semihost_write(str, offset);
-		
-		task_sleep(10);
-        mutex_unlock(&print_lock);
-    }
-}
-
 void memtest(void) {
-	{
-		int offset = 0;
-		char str[128];
-		offset += s2ascii("KERNEL LIVE!\n", (str + offset));
-		str[offset] = '\0';
-		semihost_write(str, offset);
-	}
-	
 	void *ptrs[32] = {0};
 	for (int round = 0; round < 4; round++) {
 		// alloc
@@ -146,6 +86,20 @@ void memtest(void) {
 	task_exit();
 }
 
+void idk() {
+	for (;;) {
+		int offset = 0;
+		char str[64];
+		offset += s2ascii("ticks: ", (str + offset));
+		offset += i2ascii((uint32_t)(systick_counter), (str + offset));
+		offset += s2ascii("\n", (str + offset));
+		str[offset] = '\0';
+		term_putstring(str);
+		
+		task_sleep(1000);
+	}
+}
+
 // temporary shell
 void tmpshell(void) {
 	term_putstring("> ");
@@ -197,7 +151,7 @@ int main()
 	
 	{
 		int offset = 0;
-		char str[128];
+		char str[64];
 		offset += s2ascii("KERNEL LIVE!\n", (str + offset));
 		str[offset] = '\0';
 		semihost_write(str, offset);
@@ -210,9 +164,7 @@ int main()
 	
 	task_create("SHLL", tmpshell, 2048);
 	
-	// task_create("A", taska, 256);
-    // task_create("B", taskb, 256);
-	// task_create("C", taskc, 256);
+	// task_create("IDKK", idk, 256);
 
 	SysTick_Init();
     scheduler_start();

@@ -76,3 +76,10 @@ void term_putstring(unsigned char *str) {
 		term_putchar(*str++);
 	}
 }
+
+void term_n_putstring(unsigned char *str, int len) {
+	if (len <= 0) { return; }
+	while (len--) {
+		term_putchar(*str++);
+	}
+}

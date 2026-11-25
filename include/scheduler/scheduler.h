@@ -18,6 +18,8 @@ typedef struct task_ctx_t {
     uint32_t *stack_base;
     uint32_t stack_words;
 	uint32_t wake_at;
+	uint32_t prog_base;
+    uint32_t prog_pages;
 } task_ctx_t;
 
 extern task_ctx_t  g_tasks_pool[MAX_TASKS];
@@ -29,6 +31,7 @@ extern task_ctx_t *volatile g_blocked_list;
 extern task_ctx_t *volatile g_current_task;
 
 int task_create(const char *name, void (*entry)(void), uint32_t stack_bytes);
+task_ctx_t *task_by_pid(int pid);
 void task_yield(void);
 void task_exit(void);
 void task_sleep(uint32_t ms);

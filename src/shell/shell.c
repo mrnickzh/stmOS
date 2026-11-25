@@ -7,6 +7,9 @@
 #include "shell/vkbd.h"
 #include "scheduler/scheduler.h"
 
+#include "user/loader.h"
+#include "user_hello.h"
+
 int cmd_ps(int argc, char **argv) {
     task_ctx_t *t = g_ready_list;
     if (!t) {
@@ -49,13 +52,35 @@ int cmd_echo(int argc, char **argv) {
 	return 0;
 }
 
+int cmd_run(int argc, char **argv) {
+    (void)argc; (void)argv;
+    term_putstring("loading...\n");
+    int rc = exec_flat(g_user_hello_h_data, g_user_hello_h_size, "hello");
+	
+	if (rc < 0) { return 1; }
+	
+	while (task_by_pid(rc)->state != TASK_FREE) {
+        task_sleep(50);
+    }
+	
+	char buf[64];
+    int off = 0;
+    off += s2ascii("rc=", buf);
+    off += i2ascii(rc, buf + off);
+    off += s2ascii("\n", buf + off);
+    buf[off] = 0;
+    term_putstring(buf);
+	
+	return 0;
+}
+
 struct shell_util {
 	char* name;
 	int (*func)(int, char**);
 };
 
-struct shell_util shell_utils[] = {{"ps", cmd_ps}, {"echo", cmd_echo}};
-uint32_t utils_len = 2;
+struct shell_util shell_utils[] = {{"ps", cmd_ps}, {"echo", cmd_echo}, {"run", cmd_run}};
+uint32_t utils_len = 3;
 
 char shell_buffer[64];
 uint32_t buffer_len = 0;

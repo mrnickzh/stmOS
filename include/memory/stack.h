@@ -17,8 +17,11 @@
 #define STACK_PAINT 0xA5A5A5A5
 #define STACK_GUARD 0xDEADBEEF // stack canary
 
+__attribute__((section(".stack_pool"), aligned(8)))
 extern uint32_t g_stack_pool[STACK_POOL_WORDS];
+__attribute__((section(".bss")))
 extern uint32_t *g_stack_brk;
+__attribute__((section(".bss")))
 extern uint32_t *g_stack_free[STACK_NUM_CLASSES];
 
 extern const uint32_t g_class_words[STACK_NUM_CLASSES];

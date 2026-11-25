@@ -3,7 +3,7 @@
 
 // kernel features
 #define CONFIG_SHELL             0
-#define CONFIG_SEMIHOSTING       0
+#define CONFIG_SEMIHOSTING       1
 #define CONFIG_DEBUG             1
 
 // drivers
